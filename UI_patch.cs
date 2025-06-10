@@ -5,25 +5,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TMPro;
-using UnityEngine.Localization.Settings;
-using UnityEngine.Localization.Tables;
 using UnityEngine;
 using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
+using UnityEngine.Localization.Tables;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Tweaks
 {
     internal class UI_patch
     {
-
         [HarmonyPatch(typeof(MapWindow), "RefreshPlayerMarkerPosition")]
         class MapWindow_RefreshPlayerMarkerPosition_PostfixPatch
         {
             public static void Prefix(MapWindow __instance)
             {
                 //Util.Log(" RefreshPlayerMarkerPosition  ");
-                bool show = Config.showPlayerMarkerOnMap.Value;
-                __instance.youAreHereMarkerTransform.gameObject.SetActive(show);
+                __instance.youAreHereMarkerTransform.gameObject.SetActive(Config.showPlayerMarkerOnMap.Value);
             }
         }
 
@@ -207,7 +205,7 @@ namespace Tweaks
                 __instance.fadeTween = (Tweener)__instance.canvasGroup.DOFade(1f, __instance.fadeDurationSec);
                 __instance.fadeTween.SetUpdate<Tweener>(true);
                 __instance.fadeTween.OnComplete<Tweener>(() => __instance.fadeTween = null);
-            
+
                 return false;
             }
         }
@@ -271,29 +269,6 @@ namespace Tweaks
             }
         }
 
-        //[HarmonyPatch(typeof(TooltipSectionUpgradeCost), "Init", new Type[] { typeof(UpgradeData) })]
-        public class TooltipSectionUpgradeCost_Patch
-        {
-            public static bool Prefix(TooltipSectionUpgradeCost __instance, UpgradeData upgradeData)
-            {
-                SerializableGrid grid = GameManager.Instance.SaveData.GetGridByKey(upgradeData.GridConfig.gridKey);
-                __instance.isLayedOut = false;
-                __instance.upgradeCostIcons.ForEach(icon => icon.gameObject.SetActive(false));
-                upgradeData.upgradeCost.ForEach(delegate (UpgradeCost uc)
-                {
-                    TooltipUpgradeCostIcon tooltipUpgradeCostIcon = __instance.upgradeCostIcons.Find((TooltipUpgradeCostIcon i) => i.ItemData == uc.itemData);
-                    if ((bool)tooltipUpgradeCostIcon)
-                    {
-                        tooltipUpgradeCostIcon.Init(GameManager.Instance.SaveData.GetNumItemInGridById(uc.itemData.id, grid), uc.num);
-                        tooltipUpgradeCostIcon.gameObject.SetActive(value: true);
-                    }
-                });
-                __instance.monetaryCostText.text = "$" + upgradeData.MonetaryCost.ToString("n0", LocalizationSettings.SelectedLocale.Formatter);
-                __instance.monetaryCostText.color = GameManager.Instance.SaveData.Funds >= upgradeData.MonetaryCost ? GameManager.Instance.LanguageManager.GetColor(DredgeColorTypeEnum.NEUTRAL) : GameManager.Instance.LanguageManager.GetColor(DredgeColorTypeEnum.NEGATIVE);
-                __instance.isLayedOut = true;
-                return false;
-            }
-        }
 
         //[HarmonyPatch(typeof(SellModeActionHandler))]
         public class SellModeActionHandler_Patch

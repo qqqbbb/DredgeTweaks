@@ -28,19 +28,6 @@ namespace Tweaks
         [HarmonyPatch(typeof(PlayerController))]
         public class PlayerController_Patch
         {
-
-            //[HarmonyPatch(typeof(Rigidbody), "AddTorque")]
-            class Rigidbody_AddTorque_Patch
-            {
-                public static bool Prefix(Rigidbody __instance, Vector3 torque)
-                {
-                    //if (Config.safeCollisionMagnitudeThreshold.Value == 0)
-                    //    return true;
-                    Util.Log("Rigidbody AddTorque " + __instance.name);
-                    return true;
-                }
-            }
-
             [HarmonyPostfix]
             [HarmonyPatch("Start")]
             public static void StartPostfix(PlayerController __instance)

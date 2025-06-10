@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
-using static Yarn.VirtualMachine;
 using Yarn;
+using static Yarn.VirtualMachine;
 
 namespace Tweaks
 {
@@ -119,7 +119,7 @@ namespace Tweaks
             {
                 if (Config.dayLenghtMult.Value == 1)
                     return true;
-                
+
                 if (Application.isPlaying)
                 {
                     __instance.wasDaytimeHelperVar = __instance.IsDaytime;
@@ -190,7 +190,6 @@ namespace Tweaks
                 globalSanityModifier = GameManager.Instance.GameConfigData.globalSanityModifier;
                 GameManager.Instance.GameConfigData.globalSanityModifier = globalSanityModifier * Config.sanityMultiplier.Value;
             }
-
         }
 
         //[HarmonyPatch(typeof(VirtualMachine), nameof(VirtualMachine.Continue))] !

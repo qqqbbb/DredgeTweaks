@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Tweaks
 {
@@ -36,15 +37,31 @@ namespace Tweaks
                 }
                 if (__instance.trawlNetItemInstance.durability > 0)
                 {
-                    __instance.timeUntilNextCatchRoll -= __instance.change;
-                    if (__instance.timeUntilNextCatchRoll > 0M)
-                        return false;
-
-                    //if (UnityEngine.Random.value < __instance.trawlNetItemData.CatchRate)
-                    if (Config.netCatchChance.Value >= UnityEngine.Random.value)
-                        __instance.AddTrawlItem();
-
-                    __instance.RefreshTimeUntilNextCatchRoll();
+                    if (__instance.trawlMode == TrawlNetAbility.TrawlMode.TRAWL_OOZE)
+                    {
+                        if (GameManager.Instance.OozePatchManager.TryGetOozePatchAtPosition(__instance.transform.position, out __instance.currentOozePatch))
+                        {
+                            __instance.OnOozeGathered(__instance.currentOozePatch.CollectOoze());
+                        }
+                        __instance.UpdateOozePassiveSFX(GameManager.Instance.OozePatchManager.isOozeNearToPlayer);
+                    }
+                    else
+                    {
+                        if (__instance.trawlMode != TrawlNetAbility.TrawlMode.TRAWL && __instance.trawlMode != TrawlNetAbility.TrawlMode.TRAWL_MATERIAL)
+                        {
+                            return false;
+                        }
+                        __instance.timeUntilNextCatchRoll -= __instance.change;
+                        if (__instance.timeUntilNextCatchRoll > 0m)
+                        {
+                            return false;
+                        }
+                        if (Config.netCatchChance.Value >= UnityEngine.Random.value)
+                        {
+                            __instance.AddTrawlItem();
+                        }
+                        __instance.RefreshTimeUntilNextCatchRoll();
+                    }
                 }
                 else
                 {
@@ -65,8 +82,20 @@ namespace Tweaks
             }
 
             [HarmonyPrefix]
-            [HarmonyPatch("AddTrawlItem", new Type[] { })]
-            public static bool AddTrawlItemPrefix(TrawlNetAbility __instance)
+            [HarmonyPatch("GetCatchSFX")]
+            public static bool GetCatchSFXPrefix(TrawlNetAbility __instance, ref AssetReference __result)
+            {
+                if (Config.netCatchSound.Value)
+                {
+                    return true;
+                }
+                __result = null;
+                return false;
+            }
+
+            //[HarmonyPrefix]
+            //[HarmonyPatch("AddTrawlItem", new Type[] { })]
+            public static bool AddTrawlItemPrefix_OLD(TrawlNetAbility __instance)
             {
                 //Util.Message(" RefreshTimeUntilNextCatchRoll timeUntilNextCatchRoll " +    float currentDepth = GameManager.Instance.WaveController.SampleWaterDepthAtPlayerPosition();
                 if (Config.netCatchSound.Value && Config.netCatchMaterialChance.Value == 0f)
@@ -136,7 +165,7 @@ namespace Tweaks
                 GameEvents.Instance.TriggerFishCaught();
                 if (Config.netCatchSound.Value)
                     GameManager.Instance.AudioPlayer.PlaySFX(__instance.catchSFX, AudioLayer.SFX_PLAYER, __instance.catchSFXVolume);
-                
+
                 return false;
             }
         }
@@ -153,7 +182,7 @@ namespace Tweaks
         }
 
         [HarmonyPatch(typeof(TrawlActiveTab))]
-        class TrawlActiveTab_xPatch
+        class TrawlActiveTab_Patch
         {
             [HarmonyPrefix]
             [HarmonyPatch("Toggle")]
@@ -164,7 +193,7 @@ namespace Tweaks
             }
             [HarmonyPostfix]
             [HarmonyPatch("OnEnable")]
-            public static void OnEnablePrefix(TrawlActiveTab __instance)
+            public static void OnEnablePostfix(TrawlActiveTab __instance)
             {
                 //Util.Log("TrawlActiveTab OnEnable");
                 if (!Config.showNetCatchCount.Value)

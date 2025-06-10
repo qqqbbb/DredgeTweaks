@@ -1,12 +1,12 @@
 ﻿using BepInEx;
-using HarmonyLib;
-using System;
-using System.Linq;
-using UnityEngine;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using HarmonyLib;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace Tweaks
 {
@@ -15,10 +15,10 @@ namespace Tweaks
     {
         public const string PLUGIN_GUID = "qqqbbb.dredge.tweaks";
         public const string PLUGIN_NAME = "Tweaks";
-        public const string PLUGIN_VERSION = "1.4.0";
+        public const string PLUGIN_VERSION = "1.5.1";
 
         public static ConfigFile config;
-        public static ManualLogSource log;
+        public static ManualLogSource logger;
         public static CommandTerminal.Terminal terminal;
 
         private void Awake()
@@ -27,11 +27,11 @@ namespace Tweaks
             harmony.PatchAll();
             config = this.Config;
             Tweaks.Config.Bind();
-            log = Logger;
+            logger = Logger;
             Tweaks.Config.boatSpeedMult.SettingChanged += Boat_Patch.BoatMoveSpeed_SettingChanged;
             Tweaks.Config.boatTurnMult.SettingChanged += Boat_Patch.BoatTurnSpeed_SettingChanged;
             Tweaks.Config.boatTurnsOnlyWhenMoving.SettingChanged += Boat_Patch.BoatTurnSpeed_SettingChanged;
-            Logger.LogInfo($"Plugin {PLUGIN_GUID} is loaded!");
+            Logger.LogInfo($"Plugin {PLUGIN_GUID} {PLUGIN_VERSION} is loaded");
         }
 
         private void Start()

@@ -1,12 +1,12 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using System;
-using UnityEngine;
-using BepInEx.Configuration;
-using UnityEngine.Localization.Pseudo;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
+using System.Text;
+using UnityEngine;
+using UnityEngine.Localization.Pseudo;
 
 namespace Tweaks
 {
@@ -22,7 +22,7 @@ namespace Tweaks
             else
                 fl = ((float)value - (float)min) / (float)oldRange;
 
-            return fl;
+            return Mathf.Clamp01(fl);
         }
 
         public static float MapTo01range(float value, float min, float max)
@@ -35,7 +35,7 @@ namespace Tweaks
             else
                 fl = ((float)value - (float)min) / (float)oldRange;
 
-            return fl;
+            return Mathf.Clamp01(fl);
         }
 
         public static int MapToRange(int value, int oldMin, int oldMax, int newMin, int newMax)
@@ -85,7 +85,7 @@ namespace Tweaks
             if (s == null || s.Length == 0)
                 return;
 
-            Main.log.LogDebug(s);
+            Main.logger.LogDebug(s);
         }
 
         public static void LogError(string s)
@@ -93,7 +93,7 @@ namespace Tweaks
             if (s == null || s.Length == 0)
                 return;
 
-            Main.log.LogError(s);
+            Main.logger.LogError(s);
         }
 
         public static void PrintItems()
@@ -214,7 +214,7 @@ namespace Tweaks
             int z = (int)GameManager.Instance.Player.transform.position.z;
             float playerDepth = GameManager.Instance.WaveController.SampleWaterDepthAtPlayerPosition();
             string depth = GameManager.Instance.ItemManager.GetFormattedDepthString(playerDepth);
-            Message("" + x + " " + y + " " + z + " depth " + depth );
+            Message("" + x + " " + y + " " + z + " depth " + depth);
         }
 
         public static Dictionary<HarvestableType, float> typeAvDepth = new();
@@ -289,7 +289,7 @@ namespace Tweaks
                 float mass = GameManager.Instance.Player.Controller.rb.mass;
                 SerializableGrid grid = GameManager.Instance.SaveData.Inventory;
                 int filledCells = grid.GetFilledCells(ItemType.ALL);
-          
+
                 float ratio = (float)filledCells / (float)invTotalCells;
                 GameManager.Instance.Player.Controller.rb.mass = 1 + ratio;
                 //Log("SetBoatWeight start inv " + GameManager.Instance.Player.Controller.rb.mass);
@@ -356,7 +356,7 @@ namespace Tweaks
                     if (fid.IsAberration)
                         continue;
 
-                    StringBuilder canBeCuaghtBy = new (",");
+                    StringBuilder canBeCuaghtBy = new(",");
                     if (fid.canBeCaughtByRod)
                         canBeCuaghtBy.Append(" canBeCaughtByRod,");
                     if (fid.canBeCaughtByNet)
@@ -398,9 +398,9 @@ namespace Tweaks
 
                     //if (!fid.CanAppearInBaitBalls)
                     //    Log(fid.id + ": " + harvestableType + " " + harvestPOICategory);
-                    
+
                     //Log(fid.id + ": " + harvestableType + harvestPOICategory + " harvestDifficulty " + fid.harvestDifficulty + canBeCuaghtBy + depth +
-                        //aberration + minWorldPhaseRequired + locationHiddenUntilCaught + canAppearInBaitBalls + " harvestItemWeight " + fid.harvestItemWeight + Environment.NewLine);
+                    //aberration + minWorldPhaseRequired + locationHiddenUntilCaught + canAppearInBaitBalls + " harvestItemWeight " + fid.harvestItemWeight + Environment.NewLine);
                 }
             }
         }

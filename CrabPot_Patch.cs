@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Tweaks
@@ -12,10 +11,10 @@ namespace Tweaks
     {
 
         [HarmonyPatch(typeof(SerializedCrabPotPOIData))]
-        public class SerializedCrabPotPOIData_CalculateCatchRoll_Patch
+        public class SerializedCrabPotPOIData_Patch
         {
             [HarmonyPostfix]
-            [HarmonyPatch("Init")]
+            [HarmonyPatch("Init", new Type[] { })]
             public static void InitPostfix(SerializedCrabPotPOIData __instance)
             {
                 //Util.Log(__instance.deployableItemId + " Init crabPotCatchRateMult " + Config.crabPotCatchRateMult.Value);
@@ -89,7 +88,7 @@ namespace Tweaks
                 __instance.hadDurabilityRemaining = __instance.durability > 0.0;
                 float num = newGameTime - __instance.lastUpdate;
                 __instance.lastUpdate = newGameTime;
-                __instance.durability -= num * (1f - GameManager.Instance.PlayerStats.ResearchedEquipmentMaintenanceModifier) /  Config.crabPotDurabilityMultiplier.Value;
+                __instance.durability -= num * (1f - GameManager.Instance.PlayerStats.ResearchedEquipmentMaintenanceModifier) / Config.crabPotDurabilityMultiplier.Value;
                 __instance.durability = Mathf.Clamp(__instance.durability, 0f, __instance.deployableItemData.MaxDurabilityDays);
                 __result = __instance.durability <= 0 && __instance.hadDurabilityRemaining;
                 return false;

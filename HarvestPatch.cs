@@ -1,9 +1,9 @@
-﻿using System;
+﻿using FluffyUnderware.DevTools.Extensions;
+using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FluffyUnderware.DevTools.Extensions;
-using HarmonyLib;
 using UnityEngine;
 
 namespace Tweaks
@@ -84,7 +84,7 @@ namespace Tweaks
         }
 
         [HarmonyPatch(typeof(HarvestableParticles))]
-        public class HarvestableParticles_OnEnable_Patch
+        public class HarvestableParticles_Patch
         {
             [HarmonyPostfix]
             [HarmonyPatch("OnEnable")]
@@ -121,18 +121,14 @@ namespace Tweaks
             }
             [HarmonyPrefix]
             [HarmonyPatch("SetSpecialStatus")]
-            public static bool SetSpecialStatusPrefix(HarvestableParticles __instance)
+            public static void SetSpecialStatusPrefix(HarvestableParticles __instance, ref bool isSpecial)
             {
-                //if (Config.fishingSpots.Value == FishingSpots.NeverDeplete || !Config.specialFishingSpots.Value)
-                //return false;
-                bool show = Config.specialFishingSpots.Value || Config.aberrationParticleFXonFishingSpot.Value;
-
-                return show;
+                isSpecial = Config.specialFishingSpots.Value && Config.aberrationParticleFXonFishingSpot.Value;
             }
         }
 
         [HarmonyPatch(typeof(HarvestPOI))]
-        public class HarvestPOI_Awake_Patch
+        public class HarvestPOI_Patch
         {
             [HarmonyPostfix]
             [HarmonyPatch("OnDayNightChanged")]
@@ -145,10 +141,11 @@ namespace Tweaks
                 {
                     RandomizeStock(__instance);
                 }
-                //if (Config.randomizeDredgeStock.Value && __instance.IsDredgePOI)
-                //{
-                //    RandomizeStock(__instance);
-                //}
+                if (Config.specialFishingSpots.Value == false)
+                {
+                    __instance.shouldUpdateSpecialParticles = __instance.isCurrentlySpecial;
+                    __instance.isCurrentlySpecial = false;
+                }
             }
 
             [HarmonyPostfix]
@@ -221,12 +218,13 @@ namespace Tweaks
                         float aberChance = 0f;
                         if (aberrationGenerationMode == FishAberrationGenerationMode.RANDOM_CHANCE)
                         {
-                            float aberTimeOfDayChance = GameManager.Instance.Time.IsDaytime ? Config.daytimeAberrationChance.Value : Config.nighttimeAberrationChance.Value ;
+                            float aberTimeOfDayChance = GameManager.Instance.Time.IsDaytime ? Config.daytimeAberrationChance.Value : Config.nighttimeAberrationChance.Value;
                             float aberrationCatchModifier = GameManager.Instance.PlayerStats.TotalAberrationCatchModifier;
                             float num3 = Mathf.Min(Config.aberrationCatchBonusCap.Value, aberTimeOfDayChance + (float)GameManager.Instance.SaveData.AberrationSpawnModifier + aberrationCatchModifier);
                             float specialSpotAberBonus = 0f;
                             if (isSpecialSpot)
                                 specialSpotAberBonus = GameManager.Instance.SaveData.HasCaughtAberrationAtSpecialSpot ? GameManager.Instance.GameConfigData.SpecialSpotAberrationSpawnBonus : 1f;
+
                             float sanityBonus = 1 - GameManager.Instance.Player.Sanity.CurrentSanity;
                             sanityBonus *= Config.sanityAberrationCatchBonus.Value;
                             //Util.Log("Sanity " + GameManager.Instance.Player.Sanity.CurrentSanity + " sanityBonus " + sanityBonus);
@@ -240,17 +238,16 @@ namespace Tweaks
                             List<FishItemData> candidates = new List<FishItemData>();
                             itemDataById.Aberrations.ForEach(aberrationItemData =>
                             {
-                                if (worldPhase < aberrationItemData.MinWorldPhaseRequired || GameManager.Instance.SaveData.GetCaughtCountById(aberrationItemData.id) != 0)
-                                    return;
-
-                                candidates.Add(aberrationItemData);
+                                if (worldPhase >= aberrationItemData.MinWorldPhaseRequired && GameManager.Instance.SaveData.GetCaughtCountById(aberrationItemData.id) == 0)
+                                {
+                                    candidates.Add(aberrationItemData);
+                                }
                             });
                             if (candidates.Count == 0)
-                                itemDataById.Aberrations.ForEach(aberrationItemData =>
+                                itemDataById.Aberrations.ForEach(delegate (FishItemData aberrationItemData)
                                 {
-                                    if (worldPhase < aberrationItemData.MinWorldPhaseRequired)
-                                        return;
-                                    candidates.Add(aberrationItemData);
+                                    if (worldPhase >= aberrationItemData.MinWorldPhaseRequired)
+                                        candidates.Add(aberrationItemData);
                                 });
                             if (candidates.Count > 0)
                             {
@@ -268,6 +265,7 @@ namespace Tweaks
                         GameManager.Instance.SaveData.AberrationSpawnModifier = 0M;
                         if (isSpecialSpot)
                             GameManager.Instance.SaveData.HasCaughtAberrationAtSpecialSpot = true;
+
                         ++GameManager.Instance.SaveData.NumAberrationsCaught;
                     }
                     else
@@ -299,7 +297,7 @@ namespace Tweaks
                 __result = fishItem;
                 return false;
             }
-         }
+        }
 
         private static void RandomizeStock(HarvestPOI harvestPOI)
         { // does not work for dredge spot
@@ -316,16 +314,6 @@ namespace Tweaks
             //Util.Log("RandomizeStock " + harvestPOI.name + " maxStock " + maxStock + " randomStock " + randomStock);
         }
 
-    }
-
-    [HarmonyPatch(typeof(AtrophyGridPanel), "Show")]
-    class AtrophyGridPanel_Show_Patch
-    {
-        public static void Prefix(AtrophyGridPanel __instance)
-        {
-            //Util.Message("AtrophyGridPanel Show " + GameManager.Instance.GameConfigData.atrophyGuaranteedAberrationCount);
-            GameManager.Instance.GameConfigData.atrophyGuaranteedAberrationCount = Config.minAtrophyAberrations.Value;
-        }
     }
 
     [HarmonyPatch(typeof(FishMinigame), "StartGame")]
@@ -392,7 +380,7 @@ namespace Tweaks
             }
             else if (Config.fishingSpots.Value == FishingSpots.NeverRestock)
             {
-                if (harvestType == HarvestableType.ABYSSAL || harvestType == HarvestableType.ABYSSAL || harvestType == HarvestableType.COASTAL || harvestType == HarvestableType.HADAL || harvestType == HarvestableType.ICE || harvestType == HarvestableType.MANGROVE || harvestType == HarvestableType.OCEANIC || harvestType == HarvestableType.SHALLOW || harvestType == HarvestableType.VOLCANIC)
+                if (harvestType == HarvestableType.ABYSSAL || harvestType == HarvestableType.COASTAL || harvestType == HarvestableType.HADAL || harvestType == HarvestableType.ICE || harvestType == HarvestableType.MANGROVE || harvestType == HarvestableType.OCEANIC || harvestType == HarvestableType.SHALLOW || harvestType == HarvestableType.VOLCANIC)
                 {
                     __result = false;
                 }
@@ -415,7 +403,7 @@ namespace Tweaks
         }
 
     }
-    
+
 
 
 }
