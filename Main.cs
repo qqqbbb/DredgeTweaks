@@ -15,7 +15,7 @@ namespace Tweaks
     {
         public const string PLUGIN_GUID = "qqqbbb.dredge.tweaks";
         public const string PLUGIN_NAME = "Tweaks";
-        public const string PLUGIN_VERSION = "1.5.1";
+        public const string PLUGIN_VERSION = "1.6.0";
 
         public static ConfigFile config;
         public static ManualLogSource logger;

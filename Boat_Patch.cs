@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Tweaks
@@ -57,27 +56,45 @@ namespace Tweaks
         {
             public static bool Prefix(PlayerCollider __instance, Collision other)
             {
-                if (Config.safeCollisionMagnitudeThreshold.Value == 0)
+                //Util.Message(" OnCollisionEnter magnitude " + other.relativeVelocity.magnitude);
+                if (Config.boatCollisionDamageChance.Value == 100 && Config.boatSpeedCollisionDamageChanceMult.Value == 0)
                     return true;
-                //if (Time.time <= __instance.timeOfLastCollision + __instance.invulnerabilityTimeInSeconds)
-                //    return false;
-
-                //__instance.timeOfLastCollision = Time.time;
-                //ContactPoint contactPoint = other.GetContact(0);
-                //Vector3 impactPoint = contactPoint.point;
-                //float damageMult = Mathf.Max(0f, Vector3.Dot(-contactPoint.normal, GameManager.Instance.Player.Controller.rb.velocity));
 
                 bool safe = other.gameObject.CompareTag(__instance.safeColliderTag);
-                if ((__instance.iceLayer.value & 1 << other.gameObject.layer) > 0 && GameManager.Instance.SaveData.GetIsIcebreakerEquipped())
+                if (safe == false && (__instance.iceLayer.value & 1 << other.gameObject.layer) > 0 && GameManager.Instance.SaveData.GetIsIcebreakerEquipped())
                     safe = true;
 
-                if (other.relativeVelocity.magnitude < Config.safeCollisionMagnitudeThreshold.Value)
+                if (Config.boatCollisionDamageChance.Value == 0)
                     safe = true;
-                //Util.Message(" safe " + safe);
+                else
+                {
+                    int r = UnityEngine.Random.Range(0, 101);
+                    int boatCollisionDamageChance = Config.boatCollisionDamageChance.Value;
+                    if (Config.boatSpeedCollisionDamageChanceMult.Value > 0)
+                    {
+                        float s = other.relativeVelocity.magnitude * Config.boatSpeedCollisionDamageChanceMult.Value;
+                        boatCollisionDamageChance += Mathf.RoundToInt(s);
+                    }
+                    if (r > boatCollisionDamageChance)
+                        safe = true;
+                }
+                //Util.Message(" safe " + safe); 
                 bool monster = other.gameObject.CompareTag(__instance.monsterTag);
                 bool uniqueVib = other.gameObject.CompareTag(__instance.uniqueVibrationTag);
                 __instance.ProcessHit(safe, monster, uniqueVib);
                 return false;
+            }
+        }
+
+        //[HarmonyPatch(typeof(PlayerCollider), "ProcessHit")]
+        class PlayerCollider_ProcessHit_Patch
+        {
+            public static void Prefix(PlayerCollider __instance, ref bool isSafeCollider, bool isMonster, bool hasUniqueVibration)
+            {
+                //if (Config.boatSpeedAffectsCollisionDamage.Value == false)
+                //    isSafeCollider = true;
+
+                //Util.Message($" ProcessHit {isSafeCollider}");
             }
         }
 
@@ -99,6 +116,20 @@ namespace Tweaks
                 //Util.Message("PlaceObjectOnGrid " + o.name);
                 //Util.Log("RemoveObjectFromGridData " + spatialItemInstanceToRemove.id);
                 Util.SetBoatWeight(__instance);
+            }
+        }
+
+        [HarmonyPatch(typeof(DockPOIHandler))]
+        public static class DockPOIHandler_Patches
+        {
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(DockPOIHandler), "OnPressBegin")]
+            public static void StopDockingMovement(DockPOIHandler __instance)
+            {
+                GameManager.Instance.Player.Controller._autoMoveSpeed = Config.boatDockSpeedMult.Value;
+                GameManager.Instance.Player.Controller._lookSpeed = Config.boatDockSpeedMult.Value;
+                //Util.Message($"OnPressBegin _autoMoveSpeed {GameManager.Instance.Player.Controller._autoMoveSpeed}");
+                //Util.Message($"OnPressBegin _lookSpeed {GameManager.Instance.Player.Controller._lookSpeed}");
             }
         }
 

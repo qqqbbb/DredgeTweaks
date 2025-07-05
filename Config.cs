@@ -52,20 +52,24 @@ namespace Tweaks
         public static ConfigEntry<float> netCatchChance;
         public static ConfigEntry<float> netDurabilityLossPerCatch;
         public static ConfigEntry<float> crabPotDurabilityMultiplier;
-        public static ConfigEntry<float> safeCollisionMagnitudeThreshold;
+        public static ConfigEntry<int> boatCollisionDamageChance;
         public static ConfigEntry<float> crabPotCatchRateMult;
         public static ConfigEntry<int> minAtrophyAberrations;
         public static ConfigEntry<bool> netBreakes;
         public static ConfigEntry<FishingSpots> fishingSpots;
         public static ConfigEntry<DredgeSpots> dredgeSpots;
+        public static ConfigEntry<float> boatSpeedCollisionDamageChanceMult;
+        public static ConfigEntry<float> boatDockSpeedMult;
 
         public static AcceptableValueRange<float> zeroToTenRange = new AcceptableValueRange<float>(0.0f, 10f);
+        public static AcceptableValueRange<int> zeroTo100intRange = new AcceptableValueRange<int>(0, 100);
         public static AcceptableValueRange<int> zeroToTenIntRange = new AcceptableValueRange<int>(0, 10);
         public static AcceptableValueRange<float> point1To10Range = new AcceptableValueRange<float>(0.1f, 10f);
         public static AcceptableValueRange<float> zeroToOneRange = new AcceptableValueRange<float>(0.0f, 1f);
         public static AcceptableValueRange<int> cameraFOVrange = new AcceptableValueRange<int>(20, 80);
         public static AcceptableValueRange<float> point5To5Range = new AcceptableValueRange<float>(0.5f, 5f);
         public static AcceptableValueRange<float> oneTo5Range = new AcceptableValueRange<float>(1f, 5f);
+        public static AcceptableValueRange<float> oneTo10Range = new AcceptableValueRange<float>(1f, 10f);
         public static AcceptableValueRange<float> point01To3Range = new AcceptableValueRange<float>(0.01f, 3f);
         public static ConfigDefinition advMapDef;
 
@@ -76,8 +80,13 @@ namespace Tweaks
             boatTurnMult = Main.config.Bind<float>("BOAT", "Boat turning rate multiplier", 1f, new ConfigDescription("", point5To5Range));
             showBoostGauge = Main.config.Bind<bool>("BOAT", "Show haste ability overheat gauge", true);
             boostCooldownMult = Main.config.Bind<float>("BOAT", "Haste ability heat loss rate multiplier", 1f, new ConfigDescription("", point1To10Range));
-            boostSpeedMult = Main.config.Bind<float>("BOAT", "Haste ability speed multiplier", 1f, new ConfigDescription("Your haste speed will be multiplied by this if this value is more then 1", oneTo5Range));
-            safeCollisionMagnitudeThreshold = Main.config.Bind<float>("BOAT", "Safe collision speed threshold", 0.0f, new ConfigDescription("You will not take any damage if your boat speed is below this when you collide with something.", zeroToTenRange));
+            boostSpeedMult = Main.config.Bind<float>("BOAT", "Haste ability speed multiplier", 1f, new ConfigDescription("Your haste speed will be multiplied by this", oneTo5Range));
+            boatCollisionDamageChance = Main.config.Bind<int>("BOAT", "Boat collision damage chance percent", 100, new ConfigDescription("Chance percent your boat gets damaged when colliding with things.", zeroTo100intRange));
+            boatSpeedCollisionDamageChanceMult = Main.config.Bind<float>("BOAT", "Boat collision damage chance speed multiplier", 0, "Your boat speed will be multiplied by this and added to 'Boat collision damage chance percent' setting. When you start new game your boat's max speed is about 4. When you install 'engine stack' your boat max speed is about 12.");
+            boatDockSpeedMult = Main.config.Bind<float>("BOAT", "Boat docking speed multiplier", 1f, new ConfigDescription("", oneTo10Range));
+
+
+
             cargoBoatMassMult = Main.config.Bind<float>("BOAT", "Boat cargo weight", 0.0f, new ConfigDescription("This is percent of boat cargo weight added to boat weight. When you have no free space in inventory your boat's weight will double if you set this to 100%.", zeroToOneRange));
             NetBoatMassMult = Main.config.Bind<float>("BOAT", "Trawl net weight", 0.0f, new ConfigDescription("Percent of trawl net weight added to boat weight.", zeroToOneRange));
             daytimeAberrationChance = Main.config.Bind<float>("FISHING", "Chance to catch aberrations during the day", 0.01f, new ConfigDescription("This setting does not affect chances of special fishing spots appearing in the world.", zeroToOneRange));

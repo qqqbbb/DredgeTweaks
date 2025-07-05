@@ -123,7 +123,8 @@ namespace Tweaks
             [HarmonyPatch("SetSpecialStatus")]
             public static void SetSpecialStatusPrefix(HarvestableParticles __instance, ref bool isSpecial)
             {
-                isSpecial = Config.specialFishingSpots.Value && Config.aberrationParticleFXonFishingSpot.Value;
+                if (isSpecial)
+                    isSpecial = Config.specialFishingSpots.Value && Config.aberrationParticleFXonFishingSpot.Value;
             }
         }
 
